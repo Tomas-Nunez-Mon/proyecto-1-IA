@@ -134,3 +134,4 @@ else:
     print(f"Cantidad de nodos revisados: {nodosRevisados} nodos")
     for nodo in respuesta:
         print(f"\n{nodo}")
+        a = 0
