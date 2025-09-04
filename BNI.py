@@ -1,10 +1,7 @@
 import numpy as np
+from  heapq import heappush, heappop
 from copy import deepcopy
-from heapq import heappush, heappop
 
-# ============================
-# ESTADO BASE CONSTANTE
-# ============================
 ESTADO_BASE = np.array([
     [5, 3, 0, 0, 7, 0, 0, 0, 0],
     [6, 0, 0, 1, 9, 5, 0, 0, 0],
@@ -17,9 +14,6 @@ ESTADO_BASE = np.array([
     [0, 0, 0, 0, 8, 0, 0, 7, 9]
 ])
 
-# ============================
-# CLASE NODO SUDOKU
-# ============================
 class NodoSudoku:
     def __init__(self, tablero, padre=None, costo=0):
         self.tablero = deepcopy(tablero)
@@ -67,12 +61,15 @@ class NodoSudoku:
                             listaSucesores.append(nuevoNodo)
                     return listaSucesores
         return listaSucesores
+# ------------fin clase nodo ------------------------
 
-# ============================
-# FUNCIONES A*
-# ============================
-def ingresaLista(lista, nodo):
-    heappush(lista, nodo)
+def ingresaLista(lista, nodo, esquema):
+    if esquema == "BFS":
+        lista.append(nodo)    #BFS: Ingreso al final
+    if esquema == "DFS":
+        lista.insert(0, nodo)    #DFS: Ingreso al inicio
+    if esquema == "UCS":
+        heappush(lista, nodo)
     return lista
 
 def Solucion(nodo, inicial):
@@ -82,45 +79,46 @@ def Solucion(nodo, inicial):
         nodo = nodo.padre
     return [str(inicial)] + solucion
 
-def Aestrella(nodoInicial):
-    ABIERTOS = []
-    heappush(ABIERTOS, nodoInicial)
+def busquedaNoInformada(nodoInicial, esquema):
+    ABIERTOS = [nodoInicial]
     CERRADOS = []
-    éxito = False
+    exito = False
     fracaso = False
     cont = 0
-    while not éxito and not fracaso and cont <= MAX:
-        nodoActual = heappop(ABIERTOS)
-        CERRADOS.append(nodoActual)
+    while not exito and not fracaso:
+        cont += 1
+        #print(f"cont: {cont}")
+        if esquema == "UCS":
+            nodoActual = heappop(ABIERTOS)
+        else:
+            nodoActual = ABIERTOS.pop(0)
+        #print("\nNodo actual: ")
+        #print(nodoActual)
 
+        CERRADOS.append(nodoActual)
         if nodoActual.esMeta():
-            éxito = True
+            exito = True
         else:
             listaSucesores = nodoActual.sucesores(ABIERTOS, CERRADOS)
             for nodo in listaSucesores:
-                heappush(ABIERTOS, nodo)
+                ABIERTOS = ingresaLista(ABIERTOS, nodo, esquema)
             if ABIERTOS == []:
                 fracaso = True
-        cont += 1
-
-    if éxito:
-        return Solucion(nodoActual, nodoInicial), cont
+    if exito:
+        return Solucion(nodoActual, inicial), len(CERRADOS)
     else:
-        return None, cont
+        return None
 
-# ============================
-# EJECUCIÓN PRINCIPAL
-# ============================
-
-inicial = NodoSudoku(ESTADO_BASE)  # nodo raíz
+#---- BLOQUE PRINCIPAL:
+# Cambiar el esquema por "BFS", "DFS", "UCS"
+inicial = NodoSudoku(ESTADO_BASE) 
 MAX = 10000
-
-respuesta, nodosRevisados = Aestrella(inicial)
-
+esquema = "DFS"
+respuesta, nodosRevisados = busquedaNoInformada(inicial, esquema)
 if respuesta is None:
-    print(f"Cantidad de nodos revisados: {nodosRevisados} nodos")
     print("No se encontró solución")
 else:
     print(f"Cantidad de nodos revisados: {nodosRevisados} nodos")
+    print(f"\nSolución encontrada por {esquema}: ")
     for nodo in respuesta:
         print(f"\n{nodo}")
